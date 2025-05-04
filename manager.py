@@ -1,57 +1,52 @@
+from main import game
+
 # Recuperer la colonne avec la position d'un click (chauqe case fait 100 pixels dans notre grille sur l'image)
 def get_column(position):
     x = position[0]
+    # Modifier avec bonne position
     if 0 <= x < 800:
         return x // 100
 
+# Obtenir le nom du joueur (après améliorer avec les pseudo custom)
+def get_player():
+    if game.player == "X":
+        return "Joueur 1"
+    else:
+        if game.isBot:
+            return "Bot"
+        else:
+            return "Joueur 2"
+
 # Ajouter un jeton dans la grille
-def add_jeton(grille, colonne, jeton):
-    for ligne in reversed(range(len(grille))):
-        if grille[ligne][colonne] == ".":
-            grille[ligne][colonne] = jeton
+def add_jeton(colonne):
+    for ligne in reversed(range(len(game.grille))):
+        if game.grille[ligne][colonne] == ".":
+            game.grille[ligne][colonne] = game.player
             break
 
-    win_check(grille, colonne, ligne, jeton)
-
+    win_check(colonne, ligne)
 
 # Verifier si un joueur a gagné
-def win_check(grille, colonne, ligne, jeton):
+def win_check(colonne, ligne):
     count = [1, 1, 1, 1]
     for i in range(1, 5):
         if ligne + i >= 6:
             continue
         if colonne + i >= 7:
             continue
-        if grille[ligne + i][colonne] == jeton:
+        if game.grille[ligne + i][colonne] == game.player:
             count[0] += 1
-        if grille[ligne][colonne + i] == jeton:
+        if game.grille[ligne][colonne + i] == game.player:
             count[1] += 1
-        if grille[ligne + i][colonne + i] == jeton:
+        if game.grille[ligne + i][colonne + i] == game.player:
             count[2] += 1
-        if grille[ligne - i][colonne - i] == jeton:
+        if game.grille[ligne - i][colonne - i] == game.player:
             count[3] += 1
 
     if (4 in count):
-        global winner
-        winner = player_with_jeton(jeton)
+        game.winner = get_player()
 
-
-def player_with_jeton(jeton):
-    if jeton == "X":
-        return ""
-    elif jeton == "O":
-        return "player2"
-    
-def finish(winner):
-    print("Le joueur ", winner, "a gagné !")
-    reload = None
-    while reload != "oui" or reload != 'non':
-        reload = input("Voulez vous refaire une partie ? (oui/non)")
-        if reload == "oui":
-            grille = [[".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", "."], [".", ".", ".", ".", ".", ".", "."]]
-            player1 = input("Qu'elle le pseudo du première joueur ? ")
-            player2 = input("Qu'elle le pseudo du deuxième joueur ? ")
-            roundPlayer = 1
-            winner = None
-        elif reload == "non":
-            exit()
+# Fonction pour faire jouer intelligement le bot
+def bot_play():
+    # Todo
+    add_jeton(1)

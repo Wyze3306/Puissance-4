@@ -1,5 +1,4 @@
 import pygame
-import manager
 import math
 from game import Game
 pygame.init()
@@ -33,20 +32,23 @@ while running:
     # Voir si la partie est lancé (donc update la fenetre)
     if game.isPlaying:
         game.update(screen)
+    elif game.winner != None:
+        game.finish(screen)
     else:
-        # Gerer le menu
+        # Gérer le menu
         screen.blit(background, (0, 0))
         screen.blit(friend_button, friend_button_react)
         screen.blit(bot_button, bot_button_react)
         pygame.display.flip()
         
     
-    #Gerer les events
+    #Gérer les events
     for event in pygame.event.get():
         # Evenement de fermer la fenetre
         if event.type == pygame.QUIT:
             running = False
             pygame.quit()
+            exit()
 
         # Click sur la souris -> verification bouton
         elif event.type == pygame.MOUSEBUTTONDOWN:
