@@ -13,12 +13,12 @@ class Game:
         self.player = "X" # X = Jaune & O = Rouge
         self.round = 0
         self.winner = None
-    
+
     # Lancer une partie
     def start(self, gamemode = True):
         self.isPlaying = True
         self.isBot = gamemode
-    
+
     def finish(self, screen):
         # Afficher l'ecran de fin
         gameover = pygame.image.load("images/gameover.png")
@@ -42,7 +42,7 @@ class Game:
                     self.player = "O"
                     manager.add_jeton(column)
                     self.play_animation_jeton()
-    
+
     # Mettre l'animation et le positionnement du jeton jouer
     def play_animation_jeton(self, screen):
         if self.player == "X":
@@ -60,7 +60,7 @@ class Game:
         self.player = "X"
         self.round = 0
         self.winner = None
-        
+
     # Actualiser toujours lorsque la partie est lancé
     def update(self, screen):
         # Afficher le plateau
