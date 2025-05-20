@@ -24,6 +24,7 @@ def add_jeton(grille, colonne, jeton):
 
 
 # Verifier si un joueur a gagné
+# NON FONCTIONNEL -> Voir jeu avec interface
 def win_check(grille, colonne, ligne, jeton):
     count = [1, 1, 1, 1]
     for i in range(1, 5):

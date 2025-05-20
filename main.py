@@ -14,7 +14,7 @@ class Game:
         self.isPlaying = True
         self.isBot = gamemode
 
-    def finish(self, screen):
+    def finish(self, screen, null = False):
         self.isPlaying = False
 
         # Afficher l'ecran de fin
@@ -27,7 +27,9 @@ class Game:
         back_button_react.x = math.ceil(screen.get_width() / 3.085714285714286)
         back_button_react.y = math.ceil(screen.get_height() / 2)
 
-        if game.winner == "Joueur 1":
+        if null == True :
+            imgWinName = "win_null"
+        elif game.winner == "Joueur 1":
             imgWinName = "win_player1"
         else:
             imgWinName = "win_player2"
@@ -55,13 +57,47 @@ class Game:
                     self.end()
 
     # Ajouter la position du jeton jouer (Todo: Faire l'animation de pose juste pour le derniere jeton jouer)
-    def play_animation_jeton(self, position):
+    """def play_animation_jeton(self, position):
         if self.player == "X":
             jeton = pygame.image.load("images/pion_jaune.png")
         else:
             jeton = pygame.image.load("images/pion_rouge.png")
         jeton = pygame.transform.scale(jeton, (70, 70))
         self.jetons.append([jeton, (position[0] - 35, position[1] - 35)])
+
+        # Jouer un son de jeton qui tombe
+        pygame.mixer.init()
+        pygame.mixer.music.load("sounds/play_jeton.mp3")
+        pygame.mixer.music.play()"""
+    def play_animation_jeton(self, posUiJeton, posJeton):
+        if self.player == "X":
+            jeton_image = pygame.image.load("images/pion_jaune.png")
+        else:
+            jeton_image = pygame.image.load("images/pion_rouge.png")
+        jeton_image = pygame.transform.scale(jeton_image, (70, 70))
+
+        # Son
+        pygame.mixer.init()
+        pygame.mixer.music.load("sounds/play_jeton.mp3")
+        pygame.mixer.music.play()
+
+        # Animation pour faire descendre le jeton
+        colonne = posJeton[1]
+        maxLigne = posJeton[0] # Ligne de la position final du jeton
+        if maxLigne != 0: # Si pas la ligne max (pas d'animation)
+            ligne = 0
+
+            while ligne < maxLigne:
+                tempPos = get_position_jeton((ligne, colonne))
+
+                screen.blit(jeton_image, (tempPos[0] - 35, tempPos[1] - 35))
+                pygame.display.flip()
+                pygame.time.delay(40)
+                ligne += 1
+
+        # Ajouter le jeton à la bonne position finale
+        self.jetons.append([jeton_image, (posUiJeton[0] - 35, posUiJeton[1] - 35)])
+
 
     # Terminer la partie
     def end(self):
@@ -77,16 +113,27 @@ class Game:
     def update(self, screen):
         # Verifier si un joueur a win
         if self.winner != None:
-            self.finish(screen)
-            return
+            if self.winner == False:
+                self.finish(screen, False)
+                return
+            else:
+                # Jouer un son de win
+                pygame.mixer.init()
+                pygame.mixer.music.load("sounds/win.mp3")
+                pygame.mixer.music.play()
+                # Afficher l'écran de fin
+                self.finish(screen)
+                return
 
         # Afficher le plateau
         plateau = pygame.image.load("images/plateau.png")
         plateau = pygame.transform.scale(plateau, (1080, 720))
         screen.blit(plateau, (0, 0))
 
+        # affiché tout les autres jetons
         for jeton in self.jetons:
             screen.blit(jeton[0], jeton[1])
+
         pygame.display.flip()
 
         #Gerer les events
@@ -107,27 +154,19 @@ class Game:
                     posJeton = add_jeton(column)
                     if posJeton == None:
                         return
-                    posJeton = get_position_jeton(posJeton)
-                    self.play_animation_jeton(posJeton)
+                    posUiJeton = get_position_jeton(posJeton)
+                    self.play_animation_jeton(posUiJeton, posJeton)
                     self.round += 1
                     if self.isBot == True:
                         bot_play()
-                        """ Cooldown de jeu (juste pour faire jolie et plus fluide pour le user -> (Fix : bug la fonctione play_animation_jeton est jouer après le cooldown donc affichage du jeton 1 après le tour du bot)
-                        isBotPlay = True
-                        start = time()
-                        while isBotPlay:
-                            print(time() - start)
-                            if time() - start > 3:
-                                isBotPlay = False
-                                bot_play()"""
                 elif self.isBot == False:
                     # Tour du Joueur 2 car le nombre de tour est pair
                     self.player = "O"
                     posJeton = add_jeton(column)
                     if posJeton == None:
                         return
-                    posJeton = get_position_jeton(posJeton)
-                    self.play_animation_jeton(posJeton)
+                    posUiJeton = get_position_jeton(posJeton)
+                    self.play_animation_jeton(posUiJeton, posJeton)
                     self.round += 1
 
 import pygame
@@ -192,7 +231,16 @@ def add_jeton(colonne):
         win_check(colonne, ligne)
         return [ligne, colonne]
     else:
-        return None
+        if check_null() == False:
+            game.winner = False
+        else:
+            return None
+    
+def check_null():
+    for ligne in game.grille:
+        if "." in ligne:
+            return True
+    return False
 
 # Verifier si un joueur a gagné
 def win_check(colonne, ligne):
@@ -235,38 +283,56 @@ def win_check(colonne, ligne):
 # Fonction pour faire jouer intelligement le bot
 def bot_play():
     game.player = "O"
-    column = random.randint(0, 6)
+
+    forWin = check_win_3(game.player) # Voir si le bot (joueur 2) peut gagner en jouant
+
+    if forWin == None:
+        # Regarder si on peut bloquer le joueur
+        forBlock = check_win_3("X") # Voir si le joueur adverse peut gagner
+        if forBlock == None:
+            # Jouer aléatoirement
+            column = random.randint(0, 6)
+        else:
+            # Bloquer le joueur
+            column = forBlock
+    else:
+        # Joueur le jeton pour gagner
+        column = forWin
+
     posJeton = add_jeton(column)
-    posJeton = get_position_jeton(posJeton)
-    game.play_animation_jeton(posJeton)
+    posUiJeton = get_position_jeton(posJeton)
+    game.play_animation_jeton(posUiJeton, posJeton)
     game.round += 1
 
-    """ Futur code à modifier (ancien win check) pour joueur le bot de manière intelligent
-    win = False
+def check_win_3(player):
     i = 0
     while i < 6:
-        j = 7
+        j = 0
         while j < 7:
-            if game.grille[i][j] == game.player:
-                if j<=3:
-                    if game.grille[i][j+1] == game.player and game.grille[i][j+2] == game.player and game.grille[i][j+3] == game.player:
-                        win = True
-                        return True
-                if i<=2:
-                    if game.grille[i+1][j] == game.player and game.grille[i+1][j] == game.player and game.grille[i+1][j] == game.player:
-                        win = True
-                        return True
-                if i<=2 and j<=3:
-                    if game.grille[i+1][j+1] == game.player and game.grille[i+2][j+2] == game.player and game.grille[i+3][j+3] == game.player:
-                        win = True
-                        return True
-                if i<=2 and j>=3:
-                    if game.grille[i+1][j-1] == game.player and game.grille[i+2][j-2] == game.player and game.grille[i+3][j-3] == game.player:
-                        win = True
-                        return True
-            j = j+1
-        i=i+1
-        """
+            # VERTICALE
+            if i >= 3 and game.grille[i][j] == player and game.grille[i-1][j] == player and game.grille[i-2][j] == player and game.grille[i-3][j] == ".":
+                return j
+
+            if game.grille[i][j] == player:
+                # HORIZONTALE DROITE
+                if j <= 3 and game.grille[i][j+1] == player and game.grille[i][j+2] == player and game.grille[i][j+3] == "." and (i == 5 or game.grille[i+1][j+3] != "."):
+                    return j+3
+
+                # HORIZONTALE GAUCHE
+                if j >= 3 and game.grille[i][j-1] == player and game.grille[i][j-2] == player and game.grille[i][j-3] == "." and (i == 5 or game.grille[i+1][j-3] != "."):
+                    return j-3
+
+                # DIAGONALE INVERSE
+                if i <= 2 and j <= 3 and game.grille[i+1][j+1] == player and game.grille[i+2][j+2] == player and game.grille[i+3][j+3] == "." and (i+3 == 5 or game.grille[i+4][j+3] != "."):
+                    return j+3
+
+                # DIAGONALE
+                if i <= 2 and j >= 3 and game.grille[i+1][j-1] == player and game.grille[i+2][j-2] == player and game.grille[i+3][j-3] == "." and (i+3 == 5 or game.grille[i+4][j-3] != "."):
+                    return j-3
+            j += 1
+        i += 1
+    return None
+
 
 # Differentes variables d'interfaces
 size = (1080, 720)
