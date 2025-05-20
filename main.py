@@ -56,19 +56,7 @@ class Game:
                 if back_button_react.collidepoint(pos):
                     self.end()
 
-    # Ajouter la position du jeton jouer (Todo: Faire l'animation de pose juste pour le derniere jeton jouer)
-    """def play_animation_jeton(self, position):
-        if self.player == "X":
-            jeton = pygame.image.load("images/pion_jaune.png")
-        else:
-            jeton = pygame.image.load("images/pion_rouge.png")
-        jeton = pygame.transform.scale(jeton, (70, 70))
-        self.jetons.append([jeton, (position[0] - 35, position[1] - 35)])
-
-        # Jouer un son de jeton qui tombe
-        pygame.mixer.init()
-        pygame.mixer.music.load("sounds/play_jeton.mp3")
-        pygame.mixer.music.play()"""
+    # Ajouter la position du jeton jouer
     def play_animation_jeton(self, posUiJeton, posJeton):
         if self.player == "X":
             jeton_image = pygame.image.load("images/pion_jaune.png")
